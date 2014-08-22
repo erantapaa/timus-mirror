@@ -15,13 +15,14 @@ module TimusHttp (
   , logStrLn
 ) where
 
+import TimusCommon (logStr,logStrLn)
 import Control.Lens hiding (element)
 import Network.Wreq
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Filesystem.Path.CurrentOS as FP
 import System.Directory (doesFileExist,renameFile)
-import System.IO (hFlush,stdout,Handle)
+import System.IO (Handle)
 import System.IO.Temp
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
@@ -80,10 +81,6 @@ atomicWrite path writer = do
     a <- writer thandle
     renameFile tpath (FP.encodeString path)
     return a
-
--- | Simple logging functions.
-logStr s = do putStr s; hFlush stdout
-logStrLn s = do putStrLn s; hFlush stdout
 
 -- | Create a file with an action if it does not exist.
 generateFile path action = do

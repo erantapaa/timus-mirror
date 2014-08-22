@@ -5,6 +5,8 @@ module TimusCommon (
   , firstOr
   , firstMatch
   , (=~)
+  , logStr
+  , logStrLn
 )
 where
 
@@ -13,6 +15,8 @@ import qualified Data.Text as T
 
 import qualified Text.Regex.TDFA as RE
 import qualified Text.Regex.TDFA.Text as RE
+
+import System.IO (hFlush,stdout)
 
 -- | @flip (.)@, fixity is @infixl 9@ (same as for @.@), from F#.
 (|>) :: (a -> b) -> (b -> c) -> (a -> c)
@@ -45,4 +49,10 @@ isSubstring s t =
   in not $ T.null found
 
 (=~) = (RE.=~)
+
+-- logging
+
+-- | Simple logging functions.
+logStr s = do putStr s; hFlush stdout
+logStrLn s = do putStrLn s; hFlush stdout
 

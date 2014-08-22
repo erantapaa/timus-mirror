@@ -8,7 +8,6 @@ import Data.Text (Text)
 
 import TimusCommon (firstOr, (|>), firstMatch)
 import TimusParseCommon (readHtml,extractText,elementWithClass,mkDoc)
-import qualified MyDOM as X -- for the case-insensitive version of parseLBS
 import qualified Text.XML as X hiding (parseLBS)
 import Text.XML.Cursor
 import qualified Data.Map as M
@@ -20,6 +19,7 @@ import Data.Maybe (catMaybes, fromMaybe)
 import Control.Arrow ((&&&))
 
 import qualified Data.Aeson as J
+import Data.Monoid ((<>))
 
 matchNum :: Text -> Maybe Int
 matchNum = firstMatch "&num=([0-9]+)" (read . T.unpack)
@@ -38,10 +38,6 @@ allProblemIdsFrom path = do
   doc <- readHtml path
   return $ extractProblemIds (fromDocument doc)
 
--- scrape a problem page
--- scrape the problem map page for problem statuses
-
--- routines to extract attributes from a problem page
 extractTitle =
   ($// elementWithClass "h2" "problem_title") |> extractText''
 
@@ -60,7 +56,7 @@ matchMemory = firstMatch "Memory limit: +([0-9]+) +MB" id
 
 matchNumber :: Text -> Text -> Text
 matchNumber label text =
-  let regex = T.concat [ label, "[ :(]*([0-9]+)" ]
+  let regex = label <> "[ :(]*([0-9]+)"
   in fromMaybe "???" (firstMatch regex id text)
 
 statDifficulty = matchNumber "Difficulty"
