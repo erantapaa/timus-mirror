@@ -6,16 +6,14 @@ import Control.Monad
 import qualified Data.Text as T
 import Data.Text (Text)
 
+import TimusCommon (firstOr, (|>), firstMatch)
+import TimusParseCommon (readHtml,extractText,elementWithClass,mkDoc)
 import qualified MyDOM as X -- for the case-insensitive version of parseLBS
 import qualified Text.XML as X hiding (parseLBS)
 import Text.XML.Cursor
 import qualified Data.Map as M
-import qualified Data.Map.Strict as MS
 
 import qualified Data.ByteString.Lazy.Char8 as LBS
-
-import Text.Regex.TDFA
-import Text.Regex.TDFA.Text
 
 import Data.Maybe (catMaybes, fromMaybe)
 
@@ -23,76 +21,12 @@ import Control.Arrow ((&&&))
 
 import qualified Data.Aeson as J
 
--- | @flip (.)@, fixity is @infixl 9@ (same as for @.@), from F#.
-(|>) :: (a -> b) -> (b -> c) -> (a -> c)
-(|>) = flip (.)
-
-infixl 9 |>
-
-toMaybe [] = Nothing
-toMaybe (a:_) = Just a
-
-toList (Just x) = [x]
-toList _        = []
-
--- | function to assist in regular expression matching
-firstMatch :: Text -> (Text -> a) -> Text -> Maybe a
-firstMatch regex f text = 
-  case getAllTextSubmatches $ text =~ regex of
-    (_:a:_) -> Just $ f a
-    _       -> Nothing
-
-firstMatch' :: Text -> (Text -> Text -> a) -> Text -> Maybe a
-firstMatch' regex f text =
-  case getAllTextSubmatches $ text =~ regex of
-    (_:a:b:_) -> Just $ f a b
-    _         -> Nothing
-
--- | Substring predicate for Text strings
-isSubstring :: Text -> Text -> Bool
-isSubstring s t =
-  let (_,found) = T.breakOn s t
-  in not $ T.null found
-
-{-
--- | Determine if a URL points to a problem page
-isProblemUrl :: X.Element -> Bool
-isProblemUrl e =
-  let href = M.findWithDefault "" "href" (X.elementAttributes e)
-  in isSubstring "&num=" href
--}
-
-r :: Text -> Text
-r = id
-
--- match "&num=..." in a url
 matchNum :: Text -> Maybe Int
-matchNum text =
-  case getAllTextSubmatches $ text =~ r"&num=([0-9]+)" of
-    [] -> Nothing
-    (_:a:_) -> Just $ read $ T.unpack a
-
-matchNum' :: Text -> Maybe Int
-matchNum' = firstMatch "&num=([0-9]+)" (read . T.unpack)
-
--- extract all of the text from a Node converting <br> to spaces
-extractText :: X.Node -> Text
-extractText (X.NodeElement e) = goElement e
-  where
-    goElement (X.Element eName _ eNodes) =
-      if eName == "br"
-        then " "
-        else T.concat $ map extractText eNodes
-extractText (X.NodeContent t) = t
-extractText _               = ""
-
-extractText' :: [X.Node] -> Text
-extractText' [] = ""
-extractText' (n:_) = extractText n
+matchNum = firstMatch "&num=([0-9]+)" (read . T.unpack)
 
 -- extract all of the text from the first cursor
 extractText'' [] = ""
-extractText'' (c:_) = extractText (node c)
+extractText'' (c:_) = extractText " " (node c)
 
 -- | extract all problem ids
 extractProblemIds :: Cursor -> [Int]
@@ -104,15 +38,8 @@ allProblemIdsFrom path = do
   doc <- readHtml path
   return $ extractProblemIds (fromDocument doc)
 
--- | read in a file as HTML; returns a Document
-readHtml path = do
-  bytes <- LBS.readFile path
-  return $ X.parseLBS bytes
-
 -- scrape a problem page
 -- scrape the problem map page for problem statuses
-
-elementWithClass e c = ($// (element e >=> attributeIs "class" c))
 
 -- routines to extract attributes from a problem page
 extractTitle =
@@ -179,7 +106,7 @@ extractProblemAttemptStatuses =
   ((($// elementWithClass "table" "attempt_list") &// (element "td")) &| process) |> catMaybes
   where
     process = (aHref &&& tdClass) |> fixup
-    tdClass = attribute "class" |> toMaybe |> fromMaybe ""
+    tdClass = attribute "class"  |> firstOr ""
     aHref   = (($// element "a" >=> attribute "href") &| matchNum) |> fixup2
 
     fixup :: (Maybe a, b) -> Maybe (a,b)
@@ -209,18 +136,9 @@ generateStatusJson mapPath = do
   let fixup (a,b) = (T.pack $ show a, b)
   return $ J.encode $ M.fromList $ map fixup $ scrapeProblemStatuses doc
 
--- generate the trimmed problem page
-
 -- | wrap a list of nodes into a <div>
 wrapDiv :: [X.Node] -> X.Element
 wrapDiv ns = X.Element "div" M.empty ns
-
--- | create a Document from a single Element
-mkDoc elt =
-  let prologue = X.Prologue [] Nothing []
-      epilogue = []
-      doc = X.Document prologue elt epilogue
-  in doc
 
 extractProblemNodes :: Cursor -> [ X.Node ]
 extractProblemNodes =

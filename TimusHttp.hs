@@ -2,6 +2,7 @@
 
 module TimusHttp (
   fetchUrl
+  , fetchUrl'
   , fetchProblem
   , fetchImage
   , fetchProblemMap
@@ -10,6 +11,8 @@ module TimusHttp (
   , fetchNewestThreads
   , atomicWrite
   , generateFile
+  , logStr
+  , logStrLn
 ) where
 
 import Control.Lens hiding (element)
@@ -22,7 +25,9 @@ import System.IO (hFlush,stdout,Handle)
 import System.IO.Temp
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
--- | Returns Right LBS.ByteString on success
+fetchUrl' url = fetchUrl url defaults
+
+-- | return the body of a page as a LBS
 fetchUrl url opts = do
   r <- getWith opts url
   let status = r ^. responseStatus . statusCode

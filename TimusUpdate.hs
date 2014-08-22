@@ -6,7 +6,6 @@ import Control.Monad
 import TimusHttp
 import TimusParse
 import TimusParseBoard (Message(..),messagesFromDoc,previousPageFrom,firstOr)
-import Network.Wreq
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified MyDOM as X
@@ -25,6 +24,7 @@ problems_json     = dataRoot ++ "problems.json"
 status_json       = dataRoot ++ "status.json"
 threadFile pids   = dataRoot ++ "threads/" ++ (T.unpack pids) ++ ".json"
 
+tshow :: Show a => a -> T.Text
 tshow = T.pack . show
 
 -- return all of the messages for a problem
@@ -36,13 +36,16 @@ messagesForProblem problemId = do
             nextFrom = previousPageFrom (X.fromDocument doc)
             count = length msgs
             path = dataRoot ++ "threads/" ++ (T.unpack problemId) ++ "-" ++ show n ++ ".html"
-        LBS.writeFile (fromString path) bytes
-        T.putStrLn $ "#" <> problemId <> " from: " <> from
-                         <> ", messages: " <> (tshow count) <> ", nextFrom: " <> (firstOr "(empty)" nextFrom)
+        -- LBS.writeFile (fromString path) bytes
+        -- T.putStrLn $ "#" <> problemId <> " from: " <> from <> ", messages: " <> (tshow count) <> ", nextFrom: " <> (firstOr "(empty)" nextFrom)
+        logStr "#"
         case nextFrom of
-          []        -> return (msgs:ms)
+          []        -> return ((msgs:ms),n)
           (from':_) -> go (msgs:ms) (n+1) from'
-  mms <- go [] (0::Int) ""
+  (mms,n) <- go [] (1::Int) ""
+  let flattened = concat mms
+      count = length flattened
+  logStr $ " pages: " <> show n <> " messages: " <> show count <> " - "
   return $ concat mms
 
 generateProblemThreads problemId = do
@@ -58,7 +61,7 @@ updateAllThreads = do
 
 updateEverything = do
   let mapUrl = "http://acm.timus.ru/author.aspx?id=163747"
-  generateFile mappage $ fetchUrl mapUrl defaults
+  generateFile mappage $ fetchUrl' mapUrl
 
   -- update all of the problem pages
   problemIds <- allProblemIdsFrom mappage
