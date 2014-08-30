@@ -24,7 +24,7 @@ import Data.Char (ord)
 
 import Data.Text.Encoding
 
-dataRoot = "./"
+dataRoot = "./data/"
 problemFile pid   = dataRoot ++ "pages/" ++ show pid ++ ".html"
 trimmedFile pid   = dataRoot ++ "trimmed/" ++ show pid ++ ".html"
 imageFile imageId = dataRoot ++ "images/" ++ imageId
