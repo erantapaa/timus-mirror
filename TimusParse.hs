@@ -8,17 +8,16 @@ import Data.Text (Text)
 
 import TimusCommon (firstOr, (|>), firstMatch)
 import TimusParseCommon (readHtml,extractText,elementWithClass,mkDoc)
-import qualified Text.XML as X hiding (parseLBS)
+import qualified Text.XML as X
 import Text.XML.Cursor
-import qualified Data.Map as M
-
-import qualified Data.ByteString.Lazy.Char8 as LBS
 
 import Data.Maybe (catMaybes, fromMaybe)
 
 import Control.Arrow ((&&&))
 
+import qualified Data.Map as M
 import qualified Data.Aeson as J
+
 import Data.Monoid ((<>))
 
 matchNum :: Text -> Maybe Int
@@ -33,8 +32,8 @@ extractProblemIds :: Cursor -> [Int]
 extractProblemIds = 
   (($// element "a" >=> hasAttribute "href" >=> attribute "href") &| matchNum) |> catMaybes
 
--- | parse all of the problem ids from a problem map page
-allProblemIdsFrom path = do
+-- | parse all of the problem ids from an problem map page
+allProblemIdsFromHtml path = do
   doc <- readHtml path
   return $ extractProblemIds (fromDocument doc)
 

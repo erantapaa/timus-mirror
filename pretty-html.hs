@@ -1,6 +1,6 @@
 import Text.XML hiding (readFile)
 import qualified Text.XML as X
-import qualified Text.HTML.DOM as H
+import qualified MyDOM as H
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import System.Environment (getArgs)
 import System.IO
