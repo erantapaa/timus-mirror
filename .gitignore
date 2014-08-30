@@ -1,1 +1,3 @@
 data/
+cabal.sandbox.config
+.cabal-sandbox/
