@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+#
+# Usage: check-utf8 files...
+#
+# Also can use: iconv -f UTF-8 file.html > /dev/null
+
+use Encode qw/decode FB_CROAK/;
+
+sub is_valid_utf8 {
+  my $ok = eval { decode( 'utf8', $_[0], FB_CROAK ); 1 };
+  if (!$ok) { warn "not ok: $@\n"; }
+  return $ok;
+}
+
+sub test_utf8 {
+  my ($label, $bytes) = @_;
+  my $result = is_valid_utf8($bytes) ? "valid" : "not valid";
+  print "$label: $result\n";
+}
+
+for my $path (@ARGV) {
+  my $bytes = do { local $/; open(my $fh, $path); <$fh> };
+  my $isvalid = is_valid_utf8($bytes) ? "valid" : "not valid";
+  print "$path: $isvalid\n";
+
+  # my $text = decode_utf8($bytes);
+  # my $hasSpecials = $text =~ m/\p{InSpecials}/ ? "NOT OK" : "OK";
+  # print "$path: $ok\n";
+}
+
+__END__
+test_utf8("blank", "");
+test_utf8("test1", "\xff");
+test_utf8("test2", "abc");
+test_utf8("c2", "\xc2");
+
