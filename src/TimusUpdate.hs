@@ -44,9 +44,8 @@ messagesForProblem problemId = do
         bytes <- fetchProblemThreadsFrom problemId from
         let 
             path = dataRoot ++ "threads/" ++ (T.unpack problemId) ++ "-" ++ show n ++ ".html"
-        LBS.writeFile (fromString path) bytes
-        doc <- readHtml path
-        let -- doc = X.parseLBS bytes
+        -- LBS.writeFile (fromString path) bytes
+        let doc = X.parseLBS bytes
             msgs = messagesFromDoc problemId doc
             nextFrom = previousPageFrom (X.fromDocument doc)
             count = length msgs
@@ -132,7 +131,7 @@ updateAllThreads = do
   forM_ problemIds $ \pid -> updateProblemThread (T.pack $ show pid)
 
 updateEverything = do
-  let mapUrl = "http://acm.timus.ru/author.aspx?id=163747"
+  let mapUrl = "http://acm.timus.ru/problemset.aspx?space=1&page=1" -- "http://acm.timus.ru/author.aspx?id=163747"
   generateFile mappage $ fetchUrl' mapUrl
 
   -- update all of the problem pages

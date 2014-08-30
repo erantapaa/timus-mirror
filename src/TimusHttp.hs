@@ -21,7 +21,7 @@ import Network.Wreq
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Filesystem.Path.CurrentOS as FP
-import System.Directory (doesFileExist,renameFile)
+import System.Directory (doesFileExist,renameFile,createDirectoryIfMissing)
 import System.IO (Handle)
 import System.IO.Temp
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -82,12 +82,18 @@ atomicWrite path writer = do
     renameFile tpath (FP.encodeString path)
     return a
 
+-- | Create the parent directory of a path if it doesn't exist.
+createParentDirectory path = do
+  let parent = FP.encodeString $ FP.parent $ FP.decodeString path
+  createDirectoryIfMissing True parent
+
 -- | Create a file with an action if it does not exist.
 generateFile path action = do
   b <- doesFileExist path
   if b
     then return True
-    else do logStr $ "generating " ++ path ++ " - "
+    else do createParentDirectory path
+            logStr $ "generating " ++ path ++ " - "
             bytes <- action
             atomicWrite (FP.decodeString path) (\h -> LBS.hPutStr h bytes)
             logStrLn "done"
