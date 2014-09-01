@@ -15,7 +15,7 @@ import qualified Data.Text as T
 
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
-import qualified MyDOM as X -- for the case-insensitive version of parseLBS
+import qualified Text.HTML.DOM.Lenient as X
 import qualified Text.XML as X hiding (parseLBS)
 import Text.XML.Cursor
 

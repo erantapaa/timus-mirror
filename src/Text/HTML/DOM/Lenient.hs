@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, CPP #-}
-module MyDOM
+module Text.HTML.DOM.Lenient
     ( eventConduit
     , sinkDoc
     , readFile
@@ -10,18 +10,18 @@ module MyDOM
 import Control.Monad.Trans.Resource
 import Prelude hiding (readFile)
 import qualified Data.ByteString as S
--- #if MIN_VERSION_tagstream_conduit(0,5,0)
+#if MIN_VERSION_tagstream_conduit(0,5,0)
 import qualified Text.HTML.TagStream.Text as TS
--- #endif
+#endif
 import qualified Text.HTML.TagStream as TS
 import qualified Data.XML.Types as XT
 import Data.Conduit
 import Data.Text (Text)
+import Data.Text.Encoding (streamDecodeUtf8With, Decoding(..))
+import Data.Text.Encoding.Error (lenientDecode)
 import qualified Data.Text as T
 import qualified Data.Conduit.List as CL
 import Control.Arrow ((***), second)
-import Data.Text.Encoding (decodeUtf8With, streamDecodeUtf8With, Decoding(..))
-import Data.Text.Encoding.Error (lenientDecode)
 import qualified Data.Set as Set
 import qualified Text.XML as X
 import Text.XML.Stream.Parse (decodeHtmlEntities)
@@ -106,7 +106,7 @@ eventConduit =
                                 XT.ContentText entity' -> T.concat [before, entity', entities' rest]
                                 XT.ContentEntity _ -> T.concat [before, "&", entity, entities' rest']
 
-    isVoid l = Set.member (T.toLower l) $ Set.fromList
+    isVoid = flip Set.member $ Set.fromList
         [ "area"
         , "base"
         , "br"
@@ -143,10 +143,11 @@ sinkDoc =
     toElement _ = Nothing
 
 readFile :: F.FilePath -> IO X.Document
-readFile fp = runResourceT $ sourceFile (F.encodeString fp) $$ (toText =$ sinkDoc)
+readFile fp = runResourceT $ sourceFile (F.encodeString fp) $$ toText =$ sinkDoc
 
 parseLBS :: L.ByteString -> X.Document
-parseLBS lbs = runIdentity $ runExceptionT_ $ CL.sourceList (L.toChunks lbs) $$ (toText =$ sinkDoc)
+parseLBS lbs = runIdentity $ runExceptionT_ $ CL.sourceList (L.toChunks lbs) $$ toText =$ sinkDoc
 
 parseBSChunks :: [S.ByteString] -> X.Document
-parseBSChunks bss = runIdentity $ runExceptionT_ $ CL.sourceList bss $$ (toText =$ sinkDoc)
+parseBSChunks bss = runIdentity $ runExceptionT_ $ CL.sourceList bss $$ toText =$ sinkDoc
+

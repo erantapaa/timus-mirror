@@ -16,7 +16,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     MyDOM, TimusCommon, TimusConvert, TimusHttp, TimusParse, TimusParseBoard, TimusParseCommon, TimusUpdate, TimusUpload
+  exposed-modules:     TimusCommon, TimusConvert, TimusHttp, TimusParse, TimusParseBoard, TimusParseCommon, TimusUpdate, TimusUpload, Text.HTML.DOM.Lenient
   -- other-modules:       
   other-extensions:    OverloadedStrings, CPP
   hs-source-dirs:      src

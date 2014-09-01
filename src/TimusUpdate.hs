@@ -10,7 +10,7 @@ import TimusCommon (firstOr)
 import TimusParseBoard (Message(..),messagesFromDoc,previousPageFrom)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified MyDOM as X
+import qualified Text.HTML.DOM.Lenient as X
 import qualified Text.XML.Cursor as X
 import qualified Data.Aeson as J
 import Data.Monoid ((<>),mappend)
